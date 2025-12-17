@@ -1,0 +1,40 @@
+/**
+ * WocabeeHelper Colors
+ * Color palette and CSS variables
+ */
+
+:root {
+    /* Primary colors */
+    --wh-primary: #FFB300;
+    --wh-primary-dark: #FF8F00;
+    --wh-primary-light: #FFCA28;
+    
+    /* Status colors */
+    --wh-success: #4CAF50;
+    --wh-success-light: #81C784;
+    --wh-warning: #FF9800;
+    --wh-warning-light: #FFB74D;
+    --wh-danger: #f44336;
+    --wh-danger-light: #EF5350;
+    --wh-info: #2196F3;
+    --wh-info-light: #64B5F6;
+    
+    /* Neutral colors */
+    --wh-dark: #212121;
+    --wh-dark-light: #424242;
+    --wh-gray: #757575;
+    --wh-gray-light: #BDBDBD;
+    --wh-light: #F5F5F5;
+    --wh-white: #FFFFFF;
+    
+    /* Transparency */
+    --wh-overlay: rgba(0, 0, 0, 0.5);
+    --wh-shadow: rgba(0, 0, 0, 0.2);
+    --wh-glow: rgba(255, 179, 0, 0.4);
+    
+    /* Highlight colors */
+    --wh-highlight-correct: rgba(76, 175, 80, 0.3);
+    --wh-highlight-correct-border: #4CAF50;
+    --wh-highlight-hint: rgba(33, 150, 243, 0.2);
+    --wh-highlight-hint-border: #2196F3;
+}

@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "Wocabee Helper",
+  "version": "1.0.0",
+  "description": "Your secret vocabulary assistant - Do NOT show this to your teacher!",
+
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Wocabee Helper"
+  },
+
+  "content_scripts": [
+    {
+      "matches": [
+        "https://app.wocabee.app/*",
+        "https://wocabee.app/*",
+        "https://*.wocabee.app/*"
+      ],
+
+      "js": [
+        "utils/config.js",
+        "utils/state.js",
+        "utils/dom.js",
+        "content/observer.js",
+        "content/main.js"
+      ],
+
+      "css": [
+        "styles/colors.css",
+        "styles/base.css"
+      ],
+
+      "run_at": "document_idle"
+    }
+  ]
+}

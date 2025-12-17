@@ -1,0 +1,464 @@
+/**
+ * WocabeeHelper Base Styles
+ * Main styling for the extension UI
+ */
+
+/* ==================== Control Panel ==================== */
+
+.wh-panel {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 280px;
+    background: var(--wh-white);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px var(--wh-shadow), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    font-size: 14px;
+    z-index: 999999;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.wh-panel.wh-hidden {
+    transform: translateX(350px);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.wh-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, var(--wh-primary) 0%, var(--wh-primary-dark) 100%);
+    color: var(--wh-dark);
+    cursor: grab;
+    user-select: none;
+}
+
+.wh-panel-title {
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.3px;
+}
+
+.wh-panel-toggle {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.3);
+    color: var(--wh-dark);
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.wh-panel-toggle:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.wh-panel-content {
+    padding: 16px;
+    max-height: 400px;
+    overflow-y: auto;
+    transition: all 0.3s ease;
+}
+
+.wh-panel-content.wh-collapsed {
+    max-height: 0;
+    padding: 0 16px;
+    opacity: 0;
+}
+
+.wh-panel-status {
+    padding: 10px 14px;
+    background: var(--wh-light);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    color: var(--wh-dark-light);
+    word-break: break-word;
+}
+
+.wh-panel-stats {
+    font-size: 12px;
+    color: var(--wh-gray);
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+.wh-panel-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+/* ==================== Toggle Switches ==================== */
+
+.wh-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--wh-dark-light);
+}
+
+.wh-toggle input[type="checkbox"] {
+    width: 38px;
+    height: 20px;
+    appearance: none;
+    background: var(--wh-gray-light);
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.3s;
+    flex-shrink: 0;
+}
+
+.wh-toggle input[type="checkbox"]::before {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: var(--wh-white);
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.3s;
+    box-shadow: 0 2px 4px var(--wh-shadow);
+}
+
+.wh-toggle input[type="checkbox"]:checked {
+    background: var(--wh-success);
+}
+
+.wh-toggle input[type="checkbox"]:checked::before {
+    transform: translateX(18px);
+}
+
+/* ==================== Buttons ==================== */
+
+.wh-panel-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.wh-btn {
+    flex: 1;
+    min-width: 70px;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    background: var(--wh-light);
+    color: var(--wh-dark-light);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.wh-btn:hover {
+    background: var(--wh-gray-light);
+    transform: translateY(-1px);
+}
+
+.wh-btn-danger {
+    background: var(--wh-danger-light);
+    color: var(--wh-white);
+}
+
+.wh-btn-danger:hover {
+    background: var(--wh-danger);
+}
+
+/* ==================== Notifications ==================== */
+
+.wh-notification {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 14px 24px;
+    background: var(--wh-dark);
+    color: var(--wh-white);
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 6px 24px var(--wh-overlay);
+    z-index: 9999999;
+    animation: wh-slideUp 0.4s ease;
+}
+
+.wh-notification-success {
+    background: var(--wh-success);
+}
+
+.wh-notification-warning {
+    background: var(--wh-warning);
+    color: var(--wh-dark);
+}
+
+.wh-notification-danger {
+    background: var(--wh-danger);
+}
+
+.wh-fade-out {
+    animation: wh-fadeOut 0.5s ease forwards;
+}
+
+@keyframes wh-slideUp {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@keyframes wh-fadeOut {
+    to {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-10px);
+    }
+}
+
+/* ==================== Highlighting ==================== */
+
+.wh-highlighted {
+    position: relative;
+    transition: all 0.3s ease !important;
+}
+
+.wh-highlighted.wh-correct {
+    background: var(--wh-highlight-correct) !important;
+    border: 2px solid var(--wh-highlight-correct-border) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 0 20px var(--wh-glow), 0 4px 12px var(--wh-shadow) !important;
+    animation: wh-pulse 1.5s ease infinite;
+}
+
+.wh-hint {
+    position: relative;
+}
+
+@keyframes wh-pulse {
+    0%, 100% {
+        box-shadow: 0 0 20px var(--wh-glow), 0 4px 12px var(--wh-shadow);
+    }
+    50% {
+        box-shadow: 0 0 30px var(--wh-glow), 0 4px 16px var(--wh-shadow);
+    }
+}
+
+/* ==================== Tooltips ==================== */
+
+.wh-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 14px;
+    background: var(--wh-dark);
+    color: var(--wh-white);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    z-index: 999998;
+    pointer-events: none;
+    animation: wh-tooltipIn 0.3s ease;
+    box-shadow: 0 4px 12px var(--wh-overlay);
+}
+
+.wh-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--wh-dark);
+}
+
+@keyframes wh-tooltipIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* Input hints (positioned below) */
+.wh-panel-content .wh-tooltip,
+input + .wh-tooltip,
+.wh-tooltip.wh-hint {
+    top: calc(100% + 8px);
+    bottom: auto;
+    background: var(--wh-info);
+}
+
+input + .wh-tooltip::after,
+.wh-tooltip.wh-hint::after {
+    top: auto;
+    bottom: 100%;
+    border-top-color: transparent;
+    border-bottom-color: var(--wh-info);
+}
+
+/* ==================== Indexed Words Indicator ==================== */
+
+.wh-indexed {
+    position: relative;
+}
+
+.wh-indexed::after {
+    content: '✓';
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 16px;
+    height: 16px;
+    background: var(--wh-success);
+    color: var(--wh-white);
+    border-radius: 50%;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ==================== Scrollbar Styling ==================== */
+
+.wh-panel-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.wh-panel-content::-webkit-scrollbar-track {
+    background: var(--wh-light);
+    border-radius: 3px;
+}
+
+.wh-panel-content::-webkit-scrollbar-thumb {
+    background: var(--wh-gray-light);
+    border-radius: 3px;
+}
+
+.wh-panel-content::-webkit-scrollbar-thumb:hover {
+    background: var(--wh-gray);
+}
+
+/* ==================== Auto Mode Indicator ==================== */
+
+.wh-auto-mode .wh-panel-header {
+    background: linear-gradient(135deg, var(--wh-danger-light) 0%, var(--wh-danger) 100%);
+}
+
+.wh-auto-mode .wh-panel-title::after {
+    content: ' 🤖';
+}
+
+/* ==================== Learning Mode ==================== */
+
+.wh-learning-mode .wh-panel-header {
+    background: linear-gradient(135deg, var(--wh-info-light) 0%, var(--wh-info) 100%);
+    animation: wh-learning-pulse 2s ease infinite;
+}
+
+.wh-learning-mode .wh-panel-title::after {
+    content: ' 👀';
+}
+
+@keyframes wh-learning-pulse {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 10px rgba(33, 150, 243, 0);
+    }
+}
+
+/* Learning Indicator Floating */
+.wh-learning-indicator {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, var(--wh-info) 0%, #1976D2 100%);
+    color: var(--wh-white);
+    border-radius: 12px;
+    box-shadow: 0 6px 24px rgba(33, 150, 243, 0.4);
+    z-index: 9999998;
+    animation: wh-slideUp 0.4s ease, wh-float 3s ease-in-out infinite;
+}
+
+.wh-learning-icon {
+    font-size: 24px;
+    animation: wh-look 2s ease infinite;
+}
+
+@keyframes wh-look {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    75% { transform: translateX(3px); }
+}
+
+@keyframes wh-float {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-5px); }
+}
+
+.wh-learning-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.wh-learning-text strong {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.wh-learning-text span {
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+/* ==================== Responsive ==================== */
+
+@media (max-width: 600px) {
+    .wh-panel {
+        width: calc(100% - 40px);
+        right: 20px;
+        left: 20px;
+    }
+    
+    .wh-learning-indicator {
+        bottom: 20px;
+        left: 20px;
+        right: 20px;
+        transform: none;
+    }
+    
+    @keyframes wh-float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+}

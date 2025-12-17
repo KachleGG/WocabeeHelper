@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wocabee Helper</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="popup">
+        <header class="popup-header">
+            <h1>🐝 Wocabee Helper</h1>
+            <span class="version">v1.0.0</span>
+        </header>
+
+        <div class="popup-status" id="status">
+            <span class="status-dot"></span>
+            <span class="status-text">Checking...</span>
+        </div>
+
+        <div class="popup-section">
+            <h2>📊 Statistics</h2>
+            <div class="stats-grid" id="stats">
+                <div class="stat-item">
+                    <span class="stat-value" id="stat-words">0</span>
+                    <span class="stat-label">Words</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="stat-helped">0</span>
+                    <span class="stat-label">Helped</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="popup-section">
+            <h2>⚙️ Settings</h2>
+            <div class="settings-list">
+                <label class="setting-item">
+                    <span>Auto Highlight</span>
+                    <input type="checkbox" id="setting-highlight" checked>
+                    <span class="toggle"></span>
+                </label>
+                <label class="setting-item">
+                    <span>Show Hints</span>
+                    <input type="checkbox" id="setting-hints" checked>
+                    <span class="toggle"></span>
+                </label>
+                <label class="setting-item warning">
+                    <span>Auto Answer ⚠️</span>
+                    <input type="checkbox" id="setting-auto">
+                    <span class="toggle"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="popup-section">
+            <h2>🎮 Controls</h2>
+            <div class="button-grid">
+                <button class="btn btn-primary" id="btn-toggle-panel">
+                    👁️ Toggle Panel
+                </button>
+                <button class="btn" id="btn-refresh">
+                    🔄 Refresh
+                </button>
+                <button class="btn" id="btn-export">
+                    📥 Export DB
+                </button>
+                <button class="btn btn-danger" id="btn-clear">
+                    🗑️ Clear DB
+                </button>
+            </div>
+        </div>
+
+        <footer class="popup-footer">
+            <span>Don't show this to your teacher! 🤫</span>
+        </footer>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

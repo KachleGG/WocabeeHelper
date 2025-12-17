@@ -1,0 +1,250 @@
+/* Popup Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+    font-size: 14px;
+    background: #fff;
+    min-width: 300px;
+    max-width: 300px;
+}
+
+.popup {
+    padding: 0;
+}
+
+/* Header */
+.popup-header {
+    background: linear-gradient(135deg, #FFB300 0%, #FF8F00 100%);
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.popup-header h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #212121;
+    margin: 0;
+}
+
+.version {
+    font-size: 11px;
+    background: rgba(0,0,0,0.15);
+    padding: 3px 8px;
+    border-radius: 10px;
+    color: #212121;
+}
+
+/* Status */
+.popup-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    background: #f5f5f5;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #9e9e9e;
+    animation: pulse 2s infinite;
+}
+
+.popup-status.active .status-dot {
+    background: #4CAF50;
+}
+
+.popup-status.inactive .status-dot {
+    background: #f44336;
+    animation: none;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.status-text {
+    font-size: 13px;
+    color: #616161;
+}
+
+/* Sections */
+.popup-section {
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.popup-section h2 {
+    font-size: 12px;
+    font-weight: 600;
+    color: #9e9e9e;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+/* Stats */
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.stat-item {
+    background: #f8f9fa;
+    padding: 14px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.stat-value {
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    color: #FFB300;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: #757575;
+    text-transform: uppercase;
+}
+
+/* Settings */
+.settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.setting-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.setting-item:hover {
+    background: #f0f0f0;
+}
+
+.setting-item.warning {
+    background: #fff3e0;
+}
+
+.setting-item.warning:hover {
+    background: #ffe0b2;
+}
+
+.setting-item span:first-child {
+    font-size: 13px;
+    color: #424242;
+}
+
+.setting-item input[type="checkbox"] {
+    display: none;
+}
+
+.toggle {
+    width: 40px;
+    height: 22px;
+    background: #ccc;
+    border-radius: 11px;
+    position: relative;
+    transition: background 0.3s;
+}
+
+.toggle::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.3s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.setting-item input:checked + .toggle {
+    background: #4CAF50;
+}
+
+.setting-item input:checked + .toggle::after {
+    transform: translateX(18px);
+}
+
+.setting-item.warning input:checked + .toggle {
+    background: #ff9800;
+}
+
+/* Buttons */
+.button-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.btn {
+    padding: 10px 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #f0f0f0;
+    color: #424242;
+}
+
+.btn:hover {
+    background: #e0e0e0;
+    transform: translateY(-1px);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-primary {
+    background: #FFB300;
+    color: #212121;
+    grid-column: span 2;
+}
+
+.btn-primary:hover {
+    background: #FFA000;
+}
+
+.btn-danger {
+    background: #ffebee;
+    color: #c62828;
+}
+
+.btn-danger:hover {
+    background: #ffcdd2;
+}
+
+/* Footer */
+.popup-footer {
+    padding: 12px 20px;
+    text-align: center;
+    font-size: 11px;
+    color: #9e9e9e;
+    background: #fafafa;
+}
