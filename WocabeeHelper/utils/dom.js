@@ -156,6 +156,26 @@ const WocabeeDom = {
     findCurrentQuestion() {
         const selectors = WocabeeConfig.selectors;
         
+        // PRIORITY 1: Check for Wocabee's quiz word element #q_word (testing phase)
+        const quizWord = document.getElementById('q_word');
+        if (quizWord) {
+            const text = this.getText(quizWord);
+            if (text && text.length > 0) {
+                this.log('Found question via #q_word:', text);
+                return text;
+            }
+        }
+        
+        // PRIORITY 2: Check for Wocabee's specific #introWord element (learning phase)
+        const introWord = document.getElementById('introWord');
+        if (introWord) {
+            const text = this.getText(introWord);
+            if (text && text.length > 0) {
+                this.log('Found question via #introWord:', text);
+                return text;
+            }
+        }
+        
         // Strategy 1: Look for large/prominent text elements that likely contain the word
         const prominentSelectors = [
             'h1', 'h2', 'h3', 

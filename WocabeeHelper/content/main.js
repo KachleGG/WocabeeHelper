@@ -49,11 +49,27 @@ const WocabeeHelper = {
             return;
         }
         
-        // Clear previous highlights
+        // Clear previous highlights and overlays
         WocabeeDom.clearHighlights();
+        this.hideAnswerOverlay();
+        this.hideLearningModeIndicator();
         
-        // Get current question
-        const question = WocabeeDom.findCurrentQuestion();
+        // Get current question - prioritize #q_word (quiz) then #introWord (learning)
+        let question = null;
+        const quizWord = document.getElementById('q_word');
+        if (quizWord) {
+            question = WocabeeDom.getText(quizWord);
+        }
+        if (!question) {
+            const introWord = document.getElementById('introWord');
+            if (introWord) {
+                question = WocabeeDom.getText(introWord);
+            }
+        }
+        if (!question) {
+            question = WocabeeDom.findCurrentQuestion();
+        }
+        
         WocabeeState.currentWord = question;
         
         if (!question) {
@@ -112,6 +128,9 @@ const WocabeeHelper = {
         
         this.log('Found translations for spoken word:', translations);
         
+        // Show answer overlay
+        this.showAnswerOverlay(translations.join(' / '));
+        
         // Detect exercise type and show answer
         const type = WocabeeDom.detectExerciseType();
         
@@ -131,6 +150,9 @@ const WocabeeHelper = {
     handleSelectionExercise(translations) {
         const options = WocabeeDom.findAnswerOptions();
         let foundMatch = false;
+        
+        // Show answer overlay prominently
+        this.showAnswerOverlay(translations.join(' / '));
         
         options.forEach(option => {
             const optionText = WocabeeDom.getText(option).toLowerCase();
@@ -174,6 +196,9 @@ const WocabeeHelper = {
     handleTypingExercise(translations) {
         const input = WocabeeDom.findAnswerInput();
         
+        // Show answer overlay prominently
+        this.showAnswerOverlay(translations.join(' / '));
+        
         if (!input) {
             this.log('Input field not found');
             return;
@@ -197,9 +222,10 @@ const WocabeeHelper = {
      * Handle game exercises
      */
     handleGameExercise(translations) {
-        // For games, show the answer in the panel
+        // For games, show the answer in the panel and overlay
         const hintText = translations.join(' / ');
         this.updatePanel(`🎮 Answer: ${hintText}`);
+        this.showAnswerOverlay(hintText);
         
         // Try to highlight matching elements
         const options = WocabeeDom.findAnswerOptions();
@@ -526,6 +552,44 @@ const WocabeeHelper = {
             notification.classList.add('wh-fade-out');
             setTimeout(() => notification.remove(), 500);
         }, 2500);
+    },
+
+    /**
+     * Show a prominent answer overlay at the top of the screen
+     */
+    showAnswerOverlay(answer) {
+        // Remove existing overlay
+        const existing = document.querySelector('.wh-answer-overlay');
+        if (existing) existing.remove();
+        
+        const overlay = WocabeeDom.create('div', {
+            className: 'wh-answer-overlay',
+            html: `
+                <div class="wh-answer-label">✓ Answer</div>
+                <div class="wh-answer-text">${answer}</div>
+            `
+        });
+        
+        document.body.appendChild(overlay);
+        
+        // Auto-hide after 10 seconds
+        setTimeout(() => {
+            if (overlay.parentNode) {
+                overlay.classList.add('wh-fade-out');
+                setTimeout(() => overlay.remove(), 500);
+            }
+        }, 10000);
+    },
+
+    /**
+     * Hide the answer overlay
+     */
+    hideAnswerOverlay() {
+        const overlay = document.querySelector('.wh-answer-overlay');
+        if (overlay) {
+            overlay.classList.add('wh-fade-out');
+            setTimeout(() => overlay.remove(), 500);
+        }
     },
 
     /**

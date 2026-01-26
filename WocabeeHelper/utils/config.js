@@ -13,6 +13,13 @@ const WocabeeConfig = {
 
     // Selectors for Wocabee elements
     selectors: {
+        // Wocabee-specific intro word elements (for learning phase)
+        introWord: '#introWord',
+        introTranslation: '#introTranslation',
+        
+        // Wocabee-specific quiz word element (for testing phase)
+        quizWord: '#q_word',
+        
         // Main app container
         appContainer: '#app, .app-container, [data-app], #content, .content, main, body',
         
@@ -20,7 +27,7 @@ const WocabeeConfig = {
         exerciseContainer: '.exercise, .practice, .task, [class*="exercise"], [class*="practice"], [class*="task"], #practice, form, .container',
         
         // Question/Word display - very broad to catch Wocabee's word display
-        questionWord: '.word, .question, h1, h2, h3, .big, .large, .main, [class*="word"]:not(input):not(button):not([class*="password"])',
+        questionWord: '#q_word, #introWord, .word, .question, h1, h2, h3, .big, .large, .main, [class*="word"]:not(input):not(button):not([class*="password"])',
         currentWord: '.current, .active, .highlight, .selected',
         
         // Multiple choice / Selection answers
@@ -35,7 +42,7 @@ const WocabeeConfig = {
         incorrectFeedback: '.incorrect, .wrong, .error, .bad, .red, [class*="incorrect"], [class*="wrong"], [class*="error"], [class*="bad"]',
         
         // Correct answer reveal (shown after wrong answer)
-        revealedAnswer: '.correct-answer, .right-answer, .solution, .reveal, .show-answer, [class*="solution"], [class*="reveal"], [class*="correct-answer"]',
+        revealedAnswer: '.correctWordAnswer, .correct-answer, .right-answer, .solution, .reveal, .show-answer, [class*="solution"], [class*="reveal"], [class*="correct-answer"]',
         
         // Word pairs/vocabulary list
         wordPair: '.word-pair, .vocabulary-item, .vocab-item, .pair, tr, li, .row, .item',

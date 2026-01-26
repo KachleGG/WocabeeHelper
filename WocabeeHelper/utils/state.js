@@ -129,14 +129,15 @@ const WocabeeState = {
         if (!source || !target) return false;
         if (typeof source !== 'string' || typeof target !== 'string') return false;
         
+        // Normalize for storage (preserves case)
         source = this.normalizeWord(source);
         target = this.normalizeWord(target);
         
         // Must have at least 1 character each
         if (!source || !target || source.length < 1 || target.length < 1) return false;
         
-        // Don't add if source equals target
-        if (source === target) return false;
+        // Don't add if source equals target (case-insensitive)
+        if (source.toLowerCase() === target.toLowerCase()) return false;
         
         // Reject pure numbers or timestamps
         if (/^\d+$/.test(source) || /^\d+$/.test(target)) return false;
@@ -154,25 +155,47 @@ const WocabeeState = {
         const lowerTarget = target.toLowerCase();
         if (uiWords.some(w => lowerSource.includes(w) || lowerTarget.includes(w))) return false;
 
+        // Check if we already have this word (case-insensitive key lookup)
+        let existingKey = null;
+        for (const key of this.wordDatabase.keys()) {
+            if (key.toLowerCase() === lowerSource) {
+                existingKey = key;
+                break;
+            }
+        }
+
         // Add to main database
-        if (!this.wordDatabase.has(source)) {
-            this.wordDatabase.set(source, []);
+        const dbKey = existingKey || source;
+        if (!this.wordDatabase.has(dbKey)) {
+            this.wordDatabase.set(dbKey, []);
         }
         
-        const translations = this.wordDatabase.get(source);
-        if (!translations.includes(target)) {
+        const translations = this.wordDatabase.get(dbKey);
+        // Check for duplicate translation (case-insensitive)
+        const alreadyExists = translations.some(t => t.toLowerCase() === lowerTarget);
+        if (!alreadyExists) {
             translations.push(target);
             this.stats.wordsIndexed++;
             
-            // Add to reverse database
-            if (!this.reverseDatabase.has(target)) {
-                this.reverseDatabase.set(target, []);
+            // Add to reverse database (case-insensitive key lookup)
+            let existingReverseKey = null;
+            for (const key of this.reverseDatabase.keys()) {
+                if (key.toLowerCase() === lowerTarget) {
+                    existingReverseKey = key;
+                    break;
+                }
             }
-            if (!this.reverseDatabase.get(target).includes(source)) {
-                this.reverseDatabase.get(target).push(source);
+            
+            const reverseKey = existingReverseKey || target;
+            if (!this.reverseDatabase.has(reverseKey)) {
+                this.reverseDatabase.set(reverseKey, []);
+            }
+            const reverseSources = this.reverseDatabase.get(reverseKey);
+            if (!reverseSources.some(s => s.toLowerCase() === lowerSource)) {
+                reverseSources.push(dbKey);
             }
 
-            this.log(`Added word: "${source}" -> "${target}"`);
+            this.log(`Added word: "${dbKey}" -> "${target}"`);
             this.saveToStorage();
             return true;
         }
@@ -197,19 +220,23 @@ const WocabeeState = {
     },
 
     /**
-     * Find translation for a word
+     * Find translation for a word (case-insensitive lookup)
      */
     findTranslation(word) {
-        word = this.normalizeWord(word);
+        const lookupWord = this.normalizeForLookup(word);
         
-        // Check direct lookup
-        if (this.wordDatabase.has(word)) {
-            return this.wordDatabase.get(word);
+        // Check direct lookup (case-insensitive)
+        for (const [key, translations] of this.wordDatabase) {
+            if (key.toLowerCase() === lookupWord) {
+                return translations;
+            }
         }
         
-        // Check reverse lookup
-        if (this.reverseDatabase.has(word)) {
-            return this.reverseDatabase.get(word);
+        // Check reverse lookup (case-insensitive)
+        for (const [key, sources] of this.reverseDatabase) {
+            if (key.toLowerCase() === lookupWord) {
+                return sources;
+            }
         }
         
         // Try partial matching
@@ -243,9 +270,17 @@ const WocabeeState = {
     },
 
     /**
-     * Normalize a word for consistent lookup
+     * Normalize a word for storage (preserves case)
      */
     normalizeWord(word) {
+        if (!word || typeof word !== 'string') return '';
+        return word.trim().replace(/\s+/g, ' ');
+    },
+
+    /**
+     * Normalize a word for lookup (case-insensitive)
+     */
+    normalizeForLookup(word) {
         if (!word || typeof word !== 'string') return '';
         return word.trim().toLowerCase().replace(/\s+/g, ' ');
     },

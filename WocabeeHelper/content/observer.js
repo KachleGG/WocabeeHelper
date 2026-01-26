@@ -10,6 +10,8 @@ const WocabeeObserver = {
     lastQuestion: null,        // Track the current question for learning
     isWaitingForResult: false, // Whether we're waiting to learn from a result
     lastProcessedTime: 0,      // Prevent processing too often
+    lastLearnedPair: null,     // Track last learned word pair to avoid duplicates
+    introCheckInterval: null,  // Interval for checking intro elements
     
     /**
      * Initialize the mutation observer
@@ -30,6 +32,54 @@ const WocabeeObserver = {
             characterData: true,
             attributes: true,
             attributeFilter: ['class', 'style', 'disabled']
+        });
+        
+        // Initial learning attempt from intro elements
+        this.learnFromIntroElements();
+        
+        // Set up periodic check for intro elements (every 1 second)
+        // This catches cases where content changes without triggering mutations
+        this.introCheckInterval = setInterval(() => {
+            this.learnFromIntroElements();
+        }, 1000);
+        
+        // Listen for Enter key to refresh and learn
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                // Capture the question BEFORE submission changes the page
+                const questionBeforeSubmit = this.captureCurrentQuestion();
+                
+                // Small delay to let the page update after submission
+                setTimeout(() => {
+                    this.learnFromCorrectWordAnswer(questionBeforeSubmit);
+                    this.checkForFeedbackAndLearn();
+                    this.learnFromIntroElements();
+                    this.lastLearnedPair = null;
+                    if (window.WocabeeHelper) {
+                        window.WocabeeHelper.processExercise();
+                    }
+                }, 500);
+            }
+        });
+        
+        // Also listen for clicks on buttons (for selection exercises)
+        document.addEventListener('click', (e) => {
+            const target = e.target;
+            if (target.tagName === 'BUTTON' || target.closest('button') || 
+                target.classList.contains('btn') || target.closest('.btn')) {
+                // Capture the question BEFORE click changes the page
+                const questionBeforeClick = this.captureCurrentQuestion();
+                
+                setTimeout(() => {
+                    this.learnFromCorrectWordAnswer(questionBeforeClick);
+                    this.checkForFeedbackAndLearn();
+                    this.learnFromIntroElements();
+                    this.lastLearnedPair = null;
+                    if (window.WocabeeHelper) {
+                        window.WocabeeHelper.processExercise();
+                    }
+                }, 500);
+            }
         });
         
         this.log('Observer initialized');
@@ -64,6 +114,9 @@ const WocabeeObserver = {
         }
         this.lastContentLength = currentContent;
         
+        // PRIORITY: Learn from intro word/translation pair (Wocabee-specific)
+        this.learnFromIntroElements();
+        
         // Detect exercise type
         const exerciseType = WocabeeDom.detectExerciseType();
         
@@ -74,6 +127,87 @@ const WocabeeObserver = {
             WocabeeState.currentExerciseType = exerciseType;
             this.log('Exercise type changed:', exerciseType);
             this.onExerciseChange(exerciseType);
+        }
+    },
+    
+    /**
+     * Learn from Wocabee's #introWord and #introTranslation elements
+     * This is the primary learning method for Wocabee
+     */
+    learnFromIntroElements() {
+        const introWord = document.getElementById('introWord');
+        const introTranslation = document.getElementById('introTranslation');
+        
+        if (introWord && introTranslation) {
+            const word = WocabeeDom.getText(introWord);
+            const translation = WocabeeDom.getText(introTranslation);
+            
+            if (word && translation && word.length > 0 && translation.length > 0) {
+                // Check if this is a new word pair we haven't processed
+                const pairKey = `${word}|${translation}`;
+                if (this.lastLearnedPair !== pairKey) {
+                    this.lastLearnedPair = pairKey;
+                    
+                    const added = WocabeeState.addWord(word, translation);
+                    if (added) {
+                        this.log(`Learned from intro: "${word}" → "${translation}"`);
+                        this.showLearningNotification(word, translation, 'correct');
+                    }
+                }
+            }
+        }
+    },
+    
+    /**
+     * Capture the current question word before submission
+     */
+    captureCurrentQuestion() {
+        // Check #q_word first (quiz mode)
+        const quizWord = document.getElementById('q_word');
+        if (quizWord) {
+            const text = WocabeeDom.getText(quizWord);
+            if (text && text.length > 0) {
+                this.log('Captured question from #q_word:', text);
+                return text;
+            }
+        }
+        
+        // Fall back to #introWord
+        const introWord = document.getElementById('introWord');
+        if (introWord) {
+            const text = WocabeeDom.getText(introWord);
+            if (text && text.length > 0) {
+                this.log('Captured question from #introWord:', text);
+                return text;
+            }
+        }
+        
+        // Fall back to lastQuestion
+        return this.lastQuestion;
+    },
+    
+    /**
+     * Learn directly from .correctWordAnswer element
+     * This is called after submission when user got it wrong
+     */
+    learnFromCorrectWordAnswer(questionWord) {
+        const correctWordAnswer = document.querySelector('.correctWordAnswer');
+        
+        if (correctWordAnswer) {
+            const correctAnswer = WocabeeDom.getText(correctWordAnswer);
+            const question = questionWord || this.lastQuestion;
+            
+            if (question && correctAnswer && question.length > 0 && correctAnswer.length > 0) {
+                this.log(`Found .correctWordAnswer: "${correctAnswer}" for question: "${question}"`);
+                
+                const added = WocabeeState.addWord(question, correctAnswer);
+                if (added) {
+                    this.log(`Learned from correction: "${question}" -> "${correctAnswer}"`);
+                    this.showLearningNotification(question, correctAnswer, 'correction');
+                } else {
+                    this.log('Word pair already known or invalid');
+                }
+            }
         }
     },
 
@@ -104,6 +238,9 @@ const WocabeeObserver = {
      * Process current view regardless of change detection
      */
     processCurrentView() {
+        // Always try to learn from intro elements first
+        this.learnFromIntroElements();
+        
         const type = WocabeeDom.detectExerciseType();
         
         if (type === 'vocabulary') {
@@ -185,6 +322,14 @@ const WocabeeObserver = {
         }
         
         this.isWaitingForResult = false;
+        
+        // Refresh to process next word
+        setTimeout(() => {
+            this.lastLearnedPair = null; // Reset to allow learning new intro pair
+            if (window.WocabeeHelper) {
+                window.WocabeeHelper.processExercise();
+            }
+        }, 300);
     },
 
     /**
@@ -209,6 +354,14 @@ const WocabeeObserver = {
         }
         
         this.isWaitingForResult = false;
+        
+        // Refresh to process next word
+        setTimeout(() => {
+            this.lastLearnedPair = null; // Reset to allow learning new intro pair
+            if (window.WocabeeHelper) {
+                window.WocabeeHelper.processExercise();
+            }
+        }, 300);
     },
 
     /**
@@ -264,6 +417,16 @@ const WocabeeObserver = {
      */
     findRevealedAnswer() {
         const selectors = WocabeeConfig.selectors;
+        
+        // PRIORITY: Look for Wocabee's .correctWordAnswer element
+        const correctWordAnswer = document.querySelector('.correctWordAnswer');
+        if (correctWordAnswer) {
+            const answer = WocabeeDom.getText(correctWordAnswer);
+            if (answer && answer.length > 0) {
+                this.log('Found answer from .correctWordAnswer:', answer);
+                return answer;
+            }
+        }
         
         // Method 1: Look for explicit "correct answer" element
         const revealed = WocabeeDom.find(selectors.revealedAnswer);
@@ -371,6 +534,10 @@ const WocabeeObserver = {
         if (this.observer) {
             this.observer.disconnect();
             this.observer = null;
+        }
+        if (this.introCheckInterval) {
+            clearInterval(this.introCheckInterval);
+            this.introCheckInterval = null;
         }
         clearTimeout(this.debounceTimer);
         this.log('Observer stopped');
