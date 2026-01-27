@@ -62,24 +62,20 @@ const WocabeeObserver = {
             }
         });
         
-        // Also listen for clicks on buttons (for selection exercises)
+        // Listen for all clicks to refresh the exercise
         document.addEventListener('click', (e) => {
-            const target = e.target;
-            if (target.tagName === 'BUTTON' || target.closest('button') || 
-                target.classList.contains('btn') || target.closest('.btn')) {
-                // Capture the question BEFORE click changes the page
-                const questionBeforeClick = this.captureCurrentQuestion();
-                
-                setTimeout(() => {
-                    this.learnFromCorrectWordAnswer(questionBeforeClick);
-                    this.checkForFeedbackAndLearn();
-                    this.learnFromIntroElements();
-                    this.lastLearnedPair = null;
-                    if (window.WocabeeHelper) {
-                        window.WocabeeHelper.processExercise();
-                    }
-                }, 500);
-            }
+            // Capture the question BEFORE click changes the page
+            const questionBeforeClick = this.captureCurrentQuestion();
+            
+            setTimeout(() => {
+                this.learnFromCorrectWordAnswer(questionBeforeClick);
+                this.checkForFeedbackAndLearn();
+                this.learnFromIntroElements();
+                this.lastLearnedPair = null;
+                if (window.WocabeeHelper) {
+                    window.WocabeeHelper.processExercise();
+                }
+            }, 500);
         });
         
         this.log('Observer initialized');

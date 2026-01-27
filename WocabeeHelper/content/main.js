@@ -128,9 +128,6 @@ const WocabeeHelper = {
         
         this.log('Found translations for spoken word:', translations);
         
-        // Show answer overlay
-        this.showAnswerOverlay(translations.join(' / '));
-        
         // Detect exercise type and show answer
         const type = WocabeeDom.detectExerciseType();
         
@@ -151,9 +148,6 @@ const WocabeeHelper = {
         const options = WocabeeDom.findAnswerOptions();
         let foundMatch = false;
         
-        // Show answer overlay prominently
-        this.showAnswerOverlay(translations.join(' / '));
-        
         options.forEach(option => {
             const optionText = WocabeeDom.getText(option).toLowerCase();
             
@@ -169,9 +163,6 @@ const WocabeeHelper = {
                 // Highlight the correct answer
                 WocabeeDom.highlightCorrect(option);
                 foundMatch = true;
-                
-                // Add tooltip with answer
-                WocabeeDom.addTooltip(option, '✓ Correct!');
                 
                 // Auto-click if enabled
                 if (WocabeeState.settings.autoAnswer) {
@@ -196,9 +187,6 @@ const WocabeeHelper = {
     handleTypingExercise(translations) {
         const input = WocabeeDom.findAnswerInput();
         
-        // Show answer overlay prominently
-        this.showAnswerOverlay(translations.join(' / '));
-        
         if (!input) {
             this.log('Input field not found');
             return;
@@ -222,10 +210,9 @@ const WocabeeHelper = {
      * Handle game exercises
      */
     handleGameExercise(translations) {
-        // For games, show the answer in the panel and overlay
+        // For games, show the answer in the panel
         const hintText = translations.join(' / ');
         this.updatePanel(`🎮 Answer: ${hintText}`);
-        this.showAnswerOverlay(hintText);
         
         // Try to highlight matching elements
         const options = WocabeeDom.findAnswerOptions();
