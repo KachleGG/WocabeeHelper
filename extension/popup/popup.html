@@ -9,7 +9,7 @@
 <body>
     <div class="popup">
         <header class="popup-header">
-            <h1>🐝 Wocabee Helper</h1>
+            <h1>Wocabee Helper</h1>
             <span class="version">v1.0.0</span>
         </header>
 
@@ -19,24 +19,18 @@
         </div>
 
         <div class="popup-section">
-            <h2>📊 Statistics</h2>
-            <div class="stats-grid" id="stats">
-                <div class="stat-item">
-                    <span class="stat-value" id="stat-words">0</span>
-                    <span class="stat-label">Words</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value" id="stat-helped">0</span>
-                    <span class="stat-label">Helped</span>
-                </div>
+            <h2>Saved Words</h2>
+            <div class="stat-item">
+                <span class="stat-value" id="stat-words">0</span>
+                <span class="stat-label">Words</span>
             </div>
         </div>
 
         <div class="popup-section">
-            <h2>⚙️ Settings</h2>
+            <h2>Settings</h2>
             <div class="settings-list">
                 <label class="setting-item">
-                    <span>Auto Highlight</span>
+                    <span>Selection Highlights</span>
                     <input type="checkbox" id="setting-highlight" checked>
                     <span class="toggle"></span>
                 </label>
@@ -45,34 +39,37 @@
                     <input type="checkbox" id="setting-hints" checked>
                     <span class="toggle"></span>
                 </label>
-                <label class="setting-item warning">
-                    <span>Auto Answer ⚠️</span>
-                    <input type="checkbox" id="setting-auto">
+                <label class="setting-item">
+                    <span>Auto-Answear NOT WORKING</span>
+                    <input type="checkbox" id="setting-autoanswear" checked>
                     <span class="toggle"></span>
                 </label>
             </div>
         </div>
 
         <div class="popup-section">
-            <h2>🎮 Controls</h2>
+            <h2>Controls</h2>
             <div class="button-grid">
                 <button class="btn btn-primary" id="btn-toggle-panel">
-                    👁️ Toggle Panel
+                    Toggle Panel
                 </button>
                 <button class="btn" id="btn-refresh">
-                    🔄 Refresh
+                    Refresh
                 </button>
                 <button class="btn" id="btn-export">
-                    📥 Export DB
+                    Export DB
+                </button>
+                <button class="btn" id="btn-import">
+                    Import DB      
                 </button>
                 <button class="btn btn-danger" id="btn-clear">
-                    🗑️ Clear DB
+                    Clear DB
                 </button>
             </div>
         </div>
 
         <footer class="popup-footer">
-            <span>Don't show this to your teacher! 🤫</span>
+            <span>All liability is granted to you.</span>
         </footer>
     </div>
 
