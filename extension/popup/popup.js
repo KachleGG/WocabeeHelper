@@ -39,7 +39,7 @@ async function loadSettings() {
 
     document.getElementById('setting-highlight').checked = settings.autoHighlight ?? true;
     document.getElementById('setting-hints').checked = settings.showHints ?? true;
-    document.getElementById('setting-autoanswear').checked = settings.autoAnswer ?? false;
+    document.getElementById('setting-auto').checked = settings.autoAnswer ?? false;
   } catch (error) {
     console.error('Error loading settings:', error);
   }
@@ -172,7 +172,29 @@ function setupEventListeners() {
     }
   });
 
-  //TODO: Import button
+  // Import button
+  document.getElementById('btn-import').addEventListener('click', async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const text = await file.text();
+      try {
+        const imported = JSON.parse(text);
+        const data = await chrome.storage.local.get(STORAGE_KEYS.wordDatabase);
+        const existing = data[STORAGE_KEYS.wordDatabase] ? JSON.parse(data[STORAGE_KEYS.wordDatabase]) : {};
+        const merged = { ...existing, ...imported };
+        await chrome.storage.local.set({ [STORAGE_KEYS.wordDatabase]: JSON.stringify(merged) });
+        await loadStats();
+        await sendToContentScript({ action: 'refresh' });
+      } catch (err) {
+        console.error('Import error:', err);
+      }
+    });
+    input.click();
+  });
 
   // Clear database button
   document.getElementById('btn-clear').addEventListener('click', async () => {
@@ -184,7 +206,6 @@ function setupEventListeners() {
         ]);
 
         document.getElementById('stat-words').textContent = '0';
-        document.getElementById('stat-helped').textContent = '0';
 
         await sendToContentScript({ action: 'clearDatabase' });
       } catch (error) {

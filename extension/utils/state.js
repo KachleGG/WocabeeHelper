@@ -4,46 +4,34 @@
  */
 
 const WocabeeState = {
-    // Runtime state
     isActive: false,
     currentExerciseType: null,
     currentWord: null,
-    
-    // Word database - maps source words to translations
+
+    // Word database: source -> [translations]
     wordDatabase: new Map(),
-    
-    // Reverse lookup - maps translations back to source
+    // Reverse lookup: translation -> [sources]
     reverseDatabase: new Map(),
-    
-    // Session statistics
+
     stats: {
         wordsIndexed: 0,
         answersHelped: 0,
         sessionStart: Date.now()
     },
 
-    // User settings
-    settings: { ...WocabeeConfig.defaults },
+    settings: {},
 
-    /**
-     * Initialize state from storage
-     */
     async init() {
+        this.settings = { ...WocabeeConfig.defaults };
         try {
             await this.loadFromStorage();
             this.isActive = true;
-            this.log('State initialized', { 
-                wordsInDatabase: this.wordDatabase.size,
-                settings: this.settings 
-            });
+            this.log('State initialized', { wordsInDatabase: this.wordDatabase.size });
         } catch (error) {
             this.log('Error initializing state:', error);
         }
     },
 
-    /**
-     * Load saved data from chrome.storage
-     */
     async loadFromStorage() {
         if (typeof chrome !== 'undefined' && chrome.storage) {
             try {
@@ -52,23 +40,14 @@ const WocabeeState = {
                     WocabeeConfig.storage.settings,
                     WocabeeConfig.storage.stats
                 ]);
-
-                // Load word database
                 if (data[WocabeeConfig.storage.wordDatabase]) {
                     const savedWords = JSON.parse(data[WocabeeConfig.storage.wordDatabase]);
                     this.wordDatabase = new Map(Object.entries(savedWords));
                     this.rebuildReverseDatabase();
                 }
-
-                // Load settings
                 if (data[WocabeeConfig.storage.settings]) {
-                    this.settings = { 
-                        ...WocabeeConfig.defaults, 
-                        ...JSON.parse(data[WocabeeConfig.storage.settings]) 
-                    };
+                    this.settings = { ...WocabeeConfig.defaults, ...JSON.parse(data[WocabeeConfig.storage.settings]) };
                 }
-
-                // Load stats
                 if (data[WocabeeConfig.storage.stats]) {
                     const savedStats = JSON.parse(data[WocabeeConfig.storage.stats]);
                     this.stats.wordsIndexed = savedStats.wordsIndexed || 0;
@@ -80,9 +59,6 @@ const WocabeeState = {
         }
     },
 
-    /**
-     * Save data to chrome.storage
-     */
     async saveToStorage() {
         if (typeof chrome !== 'undefined' && chrome.storage) {
             try {
@@ -92,245 +68,141 @@ const WocabeeState = {
                     [WocabeeConfig.storage.settings]: JSON.stringify(this.settings),
                     [WocabeeConfig.storage.stats]: JSON.stringify(this.stats)
                 });
-                this.log('Data saved to storage');
             } catch (error) {
                 this.log('Storage save error:', error);
             }
         }
     },
 
-    /**
-     * Rebuild reverse lookup database
-     */
     rebuildReverseDatabase() {
         this.reverseDatabase.clear();
         for (const [source, targets] of this.wordDatabase) {
-            if (Array.isArray(targets)) {
-                targets.forEach(target => {
-                    if (!this.reverseDatabase.has(target)) {
-                        this.reverseDatabase.set(target, []);
-                    }
-                    this.reverseDatabase.get(target).push(source);
-                });
-            } else {
-                if (!this.reverseDatabase.has(targets)) {
-                    this.reverseDatabase.set(targets, []);
-                }
-                this.reverseDatabase.get(targets).push(source);
-            }
+            const arr = Array.isArray(targets) ? targets : [targets];
+            arr.forEach(target => {
+                const lk = target.toLowerCase();
+                if (!this.reverseDatabase.has(lk)) this.reverseDatabase.set(lk, []);
+                const list = this.reverseDatabase.get(lk);
+                if (!list.some(s => s.toLowerCase() === source.toLowerCase())) list.push(source);
+            });
         }
     },
 
     /**
-     * Add a word pair to the database
+     * Ingest all words from $locWords into the database
      */
+    ingestLocWords(locWords) {
+        if (!Array.isArray(locWords)) return 0;
+        let count = 0;
+        for (const w of locWords) {
+            if (w.word && w.translation) {
+                if (this.addWord(w.word, w.translation)) count++;
+                // Also add reverse so both directions work
+                if (this.addWord(w.translation, w.word)) count++;
+            }
+        }
+        if (count > 0) this.log(`Ingested ${count} word pairs from $locWords`);
+        return count;
+    },
+
+    /**
+     * Find the translation for a word from $locWords by word_id
+     */
+    findByWordId(wordId) {
+        try {
+            if (typeof $locWords !== 'undefined' && Array.isArray($locWords)) {
+                const entry = $locWords.find(w => String(w.word_id) === String(wordId));
+                if (entry) return { word: entry.word, translation: entry.translation };
+            }
+        } catch (e) {}
+        return null;
+    },
+
     addWord(source, target) {
-        // Validate inputs
         if (!source || !target) return false;
         if (typeof source !== 'string' || typeof target !== 'string') return false;
-        
-        // Normalize for storage (preserves case)
-        source = this.normalizeWord(source);
-        target = this.normalizeWord(target);
-        
-        // Must have at least 1 character each
+        source = source.trim().replace(/\s+/g, ' ');
+        target = target.trim().replace(/\s+/g, ' ');
         if (!source || !target || source.length < 1 || target.length < 1) return false;
-        
-        // Don't add if source equals target (case-insensitive)
         if (source.toLowerCase() === target.toLowerCase()) return false;
-        
-        // Reject pure numbers or timestamps
         if (/^\d+$/.test(source) || /^\d+$/.test(target)) return false;
-        if (/^\d{10,}/.test(source) || /^\d{10,}/.test(target)) return false;
-        
-        // Reject if too few letters (at least 2 letters required)
-        const letterRegex = /[a-zA-ZáčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽäöüßÄÖÜ]/g;
-        const sourceLetters = (source.match(letterRegex) || []).length;
-        const targetLetters = (target.match(letterRegex) || []).length;
-        if (sourceLetters < 2 || targetLetters < 2) return false;
-        
-        // Reject common UI words
-        const uiWords = ['learning mode', 'wocabee', 'seznam', 'balíků', 'settings', 'menu', 'next', 'back', 'indexed', 'words known'];
-        const lowerSource = source.toLowerCase();
-        const lowerTarget = target.toLowerCase();
-        if (uiWords.some(w => lowerSource.includes(w) || lowerTarget.includes(w))) return false;
 
-        // Check if we already have this word (case-insensitive key lookup)
+        const lowerSource = source.toLowerCase();
+
+        // Case-insensitive key lookup
         let existingKey = null;
         for (const key of this.wordDatabase.keys()) {
-            if (key.toLowerCase() === lowerSource) {
-                existingKey = key;
-                break;
-            }
+            if (key.toLowerCase() === lowerSource) { existingKey = key; break; }
         }
 
-        // Add to main database
         const dbKey = existingKey || source;
-        if (!this.wordDatabase.has(dbKey)) {
-            this.wordDatabase.set(dbKey, []);
-        }
-        
+        if (!this.wordDatabase.has(dbKey)) this.wordDatabase.set(dbKey, []);
+
         const translations = this.wordDatabase.get(dbKey);
-        // Check for duplicate translation (case-insensitive)
-        const alreadyExists = translations.some(t => t.toLowerCase() === lowerTarget);
-        if (!alreadyExists) {
-            translations.push(target);
-            this.stats.wordsIndexed++;
-            
-            // Add to reverse database (case-insensitive key lookup)
-            let existingReverseKey = null;
-            for (const key of this.reverseDatabase.keys()) {
-                if (key.toLowerCase() === lowerTarget) {
-                    existingReverseKey = key;
-                    break;
-                }
-            }
-            
-            const reverseKey = existingReverseKey || target;
-            if (!this.reverseDatabase.has(reverseKey)) {
-                this.reverseDatabase.set(reverseKey, []);
-            }
-            const reverseSources = this.reverseDatabase.get(reverseKey);
-            if (!reverseSources.some(s => s.toLowerCase() === lowerSource)) {
-                reverseSources.push(dbKey);
-            }
+        const lowerTarget = target.toLowerCase();
+        if (translations.some(t => t.toLowerCase() === lowerTarget)) return false;
 
-            this.log(`Added word: "${dbKey}" -> "${target}"`);
-            this.saveToStorage();
-            return true;
-        }
-        
-        return false;
+        translations.push(target);
+        this.stats.wordsIndexed++;
+
+        // Reverse database
+        if (!this.reverseDatabase.has(lowerTarget)) this.reverseDatabase.set(lowerTarget, []);
+        const reverseSources = this.reverseDatabase.get(lowerTarget);
+        if (!reverseSources.some(s => s.toLowerCase() === lowerSource)) reverseSources.push(dbKey);
+
+        this.saveToStorage();
+        return true;
     },
 
-    /**
-     * Add multiple word pairs at once
-     */
     addWords(wordPairs) {
-        let addedCount = 0;
-        wordPairs.forEach(([source, target]) => {
-            if (this.addWord(source, target)) {
-                addedCount++;
-            }
-        });
-        if (addedCount > 0) {
-            this.log(`Indexed ${addedCount} new words`);
-        }
-        return addedCount;
+        let count = 0;
+        wordPairs.forEach(([s, t]) => { if (this.addWord(s, t)) count++; });
+        return count;
     },
 
-    /**
-     * Find translation for a word (case-insensitive lookup)
-     */
     findTranslation(word) {
-        const lookupWord = this.normalizeForLookup(word);
-        
-        // Check direct lookup (case-insensitive)
+        if (!word) return null;
+        const lookup = word.trim().toLowerCase();
+
+        // Direct lookup
         for (const [key, translations] of this.wordDatabase) {
-            if (key.toLowerCase() === lookupWord) {
-                return translations;
-            }
+            if (key.toLowerCase() === lookup) return translations;
         }
-        
-        // Check reverse lookup (case-insensitive)
+        // Reverse lookup
         for (const [key, sources] of this.reverseDatabase) {
-            if (key.toLowerCase() === lookupWord) {
-                return sources;
-            }
+            if (key === lookup) return sources;
         }
-        
-        // Try partial matching
-        return this.findPartialMatch(word);
+        return null;
     },
 
-    /**
-     * Find partial matches for a word
-     */
-    findPartialMatch(word) {
-        const matches = [];
-        const lowerWord = word.toLowerCase();
-        
-        // Search in main database
-        for (const [source, targets] of this.wordDatabase) {
-            if (source.toLowerCase().includes(lowerWord) || 
-                lowerWord.includes(source.toLowerCase())) {
-                matches.push(...targets);
-            }
-        }
-        
-        // Search in reverse database
-        for (const [target, sources] of this.reverseDatabase) {
-            if (target.toLowerCase().includes(lowerWord) || 
-                lowerWord.includes(target.toLowerCase())) {
-                matches.push(...sources);
-            }
-        }
-        
-        return matches.length > 0 ? [...new Set(matches)] : null;
-    },
-
-    /**
-     * Normalize a word for storage (preserves case)
-     */
-    normalizeWord(word) {
-        if (!word || typeof word !== 'string') return '';
-        return word.trim().replace(/\s+/g, ' ');
-    },
-
-    /**
-     * Normalize a word for lookup (case-insensitive)
-     */
-    normalizeForLookup(word) {
-        if (!word || typeof word !== 'string') return '';
-        return word.trim().toLowerCase().replace(/\s+/g, ' ');
-    },
-
-    /**
-     * Get database statistics
-     */
     getStats() {
         return {
             totalWords: this.wordDatabase.size,
-            totalTranslations: [...this.wordDatabase.values()].reduce((sum, arr) => sum + arr.length, 0),
             wordsIndexed: this.stats.wordsIndexed,
             answersHelped: this.stats.answersHelped,
             sessionDuration: Date.now() - this.stats.sessionStart
         };
     },
 
-    /**
-     * Clear all stored data
-     */
     async clearDatabase() {
         this.wordDatabase.clear();
         this.reverseDatabase.clear();
         this.stats.wordsIndexed = 0;
         this.stats.answersHelped = 0;
         await this.saveToStorage();
-        this.log('Database cleared');
     },
 
-    /**
-     * Export database as JSON
-     */
     exportDatabase() {
         return JSON.stringify(Object.fromEntries(this.wordDatabase), null, 2);
     },
 
-    /**
-     * Import database from JSON
-     */
     importDatabase(jsonString) {
         try {
             const data = JSON.parse(jsonString);
             let imported = 0;
             for (const [source, targets] of Object.entries(data)) {
-                const targetArray = Array.isArray(targets) ? targets : [targets];
-                targetArray.forEach(target => {
-                    if (this.addWord(source, target)) imported++;
-                });
+                const arr = Array.isArray(targets) ? targets : [targets];
+                arr.forEach(t => { if (this.addWord(source, t)) imported++; });
             }
-            this.log(`Imported ${imported} word pairs`);
             return imported;
         } catch (error) {
             this.log('Import error:', error);
@@ -338,9 +210,6 @@ const WocabeeState = {
         }
     },
 
-    /**
-     * Logging helper
-     */
     log(...args) {
         if (WocabeeConfig.debug) {
             console.log(`%c[${WocabeeConfig.name}]`, 'color: #4CAF50; font-weight: bold;', ...args);
@@ -348,5 +217,4 @@ const WocabeeState = {
     }
 };
 
-// Make it available globally
 window.WocabeeState = WocabeeState;

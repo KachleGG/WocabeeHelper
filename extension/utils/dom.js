@@ -1,50 +1,25 @@
 /**
  * WocabeeHelper DOM Utilities
- * Helper functions for DOM manipulation and element finding
+ * All methods target real WocaBee DOM elements
  */
 
 const WocabeeDom = {
     /**
-     * Query selector with multiple fallback selectors
+     * Query selector helper
      */
-    find(selectors, parent = document) {
-        if (typeof selectors === 'string') {
-            selectors = selectors.split(',').map(s => s.trim());
-        }
-        
-        for (const selector of selectors) {
-            try {
-                const element = parent.querySelector(selector);
-                if (element) return element;
-            } catch (e) {
-                // Invalid selector, continue
-            }
-        }
-        return null;
+    find(selector, parent = document) {
+        try { return parent.querySelector(selector); } catch (e) { return null; }
     },
 
     /**
-     * Query selector all with multiple fallback selectors
+     * Query selector all helper
      */
-    findAll(selectors, parent = document) {
-        if (typeof selectors === 'string') {
-            selectors = selectors.split(',').map(s => s.trim());
-        }
-        
-        const results = [];
-        for (const selector of selectors) {
-            try {
-                const elements = parent.querySelectorAll(selector);
-                results.push(...elements);
-            } catch (e) {
-                // Invalid selector, continue
-            }
-        }
-        return [...new Set(results)];
+    findAll(selector, parent = document) {
+        try { return [...parent.querySelectorAll(selector)]; } catch (e) { return []; }
     },
 
     /**
-     * Get text content from element, cleaned up
+     * Get clean text content from element
      */
     getText(element) {
         if (!element) return '';
@@ -56,48 +31,19 @@ const WocabeeDom = {
      */
     create(tag, attributes = {}, children = []) {
         const element = document.createElement(tag);
-        
         Object.entries(attributes).forEach(([key, value]) => {
-            if (key === 'className' || key === 'class') {
-                element.className = value;
-            } else if (key === 'style' && typeof value === 'object') {
-                Object.assign(element.style, value);
-            } else if (key.startsWith('on') && typeof value === 'function') {
-                element.addEventListener(key.slice(2).toLowerCase(), value);
-            } else if (key === 'text') {
-                element.textContent = value;
-            } else if (key === 'html') {
-                element.innerHTML = value;
-            } else {
-                element.setAttribute(key, value);
-            }
+            if (key === 'className' || key === 'class') element.className = value;
+            else if (key === 'style' && typeof value === 'object') Object.assign(element.style, value);
+            else if (key.startsWith('on') && typeof value === 'function') element.addEventListener(key.slice(2).toLowerCase(), value);
+            else if (key === 'text') element.textContent = value;
+            else if (key === 'html') element.innerHTML = value;
+            else element.setAttribute(key, value);
         });
-        
         children.forEach(child => {
-            if (typeof child === 'string') {
-                element.appendChild(document.createTextNode(child));
-            } else if (child instanceof Node) {
-                element.appendChild(child);
-            }
+            if (typeof child === 'string') element.appendChild(document.createTextNode(child));
+            else if (child instanceof Node) element.appendChild(child);
         });
-        
         return element;
-    },
-
-    /**
-     * Add a tooltip to an element
-     */
-    addTooltip(element, text) {
-        const tooltip = this.create('div', {
-            className: WocabeeConfig.classes.tooltip,
-            text: text
-        });
-        
-        element.style.position = 'relative';
-        element.appendChild(tooltip);
-        element.classList.add(WocabeeConfig.classes.hint);
-        
-        return tooltip;
     },
 
     /**
@@ -109,21 +55,13 @@ const WocabeeDom = {
     },
 
     /**
-     * Remove all helper highlights from elements
+     * Remove all helper highlights
      */
     clearHighlights(parent = document) {
-        const highlighted = parent.querySelectorAll(`.${WocabeeConfig.classes.highlighted}`);
-        highlighted.forEach(el => {
-            el.classList.remove(
-                WocabeeConfig.classes.highlighted,
-                WocabeeConfig.classes.correct,
-                WocabeeConfig.classes.hint
-            );
+        parent.querySelectorAll(`.${WocabeeConfig.classes.highlighted}`).forEach(el => {
+            el.classList.remove(WocabeeConfig.classes.highlighted, WocabeeConfig.classes.correct, WocabeeConfig.classes.hint);
         });
-        
-        // Remove tooltips
-        const tooltips = parent.querySelectorAll(`.${WocabeeConfig.classes.tooltip}`);
-        tooltips.forEach(t => t.remove());
+        parent.querySelectorAll(`.${WocabeeConfig.classes.tooltip}`).forEach(t => t.remove());
     },
 
     /**
@@ -131,408 +69,273 @@ const WocabeeDom = {
      */
     showInputHint(input, hintText) {
         if (!input || !hintText) return null;
-        
-        // Remove existing hint
         const existingHint = input.parentElement?.querySelector(`.${WocabeeConfig.classes.tooltip}`);
         if (existingHint) existingHint.remove();
-        
+
         const hint = this.create('div', {
             className: `${WocabeeConfig.classes.tooltip} ${WocabeeConfig.classes.hint}`,
             html: `💡 <strong>${hintText}</strong>`
         });
-        
         if (input.parentElement) {
             input.parentElement.style.position = 'relative';
             input.parentElement.appendChild(hint);
         }
-        
         return hint;
     },
 
+    // ===== WocaBee-specific detection =====
+
     /**
-     * Find the current question/word being asked
-     * Uses multiple strategies to find the word being tested
+     * Check if an exercise container is currently visible (display !== 'none')
+     */
+    isVisible(selector) {
+        const el = typeof selector === 'string' ? this.find(selector) : selector;
+        if (!el) return false;
+        return el.style.display !== 'none' && el.offsetParent !== null;
+    },
+
+    /**
+     * Detect the current exercise type using WocaBee's specific container IDs
+     */
+    detectExerciseType() {
+        const s = WocabeeConfig.selectors;
+
+        // Check completion first
+        if (this.isVisible(s.msgCompleted)) return 'completed';
+
+        // Check each exercise container visibility
+        if (this.isVisible(s.intro))                return 'intro';
+        if (this.isVisible(s.chooseWord))           return 'chooseWord';
+        if (this.isVisible(s.oneOutOfMany))         return 'oneOutOfMany';
+        if (this.isVisible(s.translateWord))        return 'translateWord';
+        if (this.isVisible(s.completeWord))         return 'completeWord';
+        if (this.isVisible(s.pexeso))               return 'pexeso';
+        if (this.isVisible(s.findPair))             return 'findPair';
+        if (this.isVisible(s.matchPair))            return 'matchPair';
+        if (this.isVisible(s.transcribe))           return 'transcribe';
+        if (this.isVisible(s.translateFallingWord)) return 'translateFallingWord';
+        if (this.isVisible(s.arrangeWords))         return 'arrangeWords';
+        if (this.isVisible(s.describePicture))      return 'describePicture';
+        if (this.isVisible(s.addMissingWord))       return 'addMissingWord';
+
+        return null;
+    },
+
+    /**
+     * Find the current question word from the page
      */
     findCurrentQuestion() {
-        const selectors = WocabeeConfig.selectors;
-        
-        // PRIORITY 1: Check for Wocabee's quiz word element #q_word (testing phase)
+        // #q_word is used for quiz/exercise, #introWord for learning intro
         const quizWord = document.getElementById('q_word');
         if (quizWord) {
             const text = this.getText(quizWord);
-            if (text && text.length > 0) {
-                this.log('Found question via #q_word:', text);
-                return text;
-            }
+            if (text) return text;
         }
-        
-        // PRIORITY 2: Check for Wocabee's specific #introWord element (learning phase)
+
+        // chooseWord question
+        const chWord = document.getElementById('ch_word');
+        if (chWord) {
+            const text = this.getText(chWord);
+            if (text) return text;
+        }
+
+        // completeWord question
+        const cwQuestion = document.getElementById('completeWordQuestion');
+        if (cwQuestion) {
+            const text = this.getText(cwQuestion);
+            if (text) return text;
+        }
+
+        // Falling word
+        const fwWord = document.getElementById('tfw_word');
+        if (fwWord) {
+            const text = this.getText(fwWord);
+            if (text) return text;
+        }
+
+        // introWord
         const introWord = document.getElementById('introWord');
         if (introWord) {
             const text = this.getText(introWord);
-            if (text && text.length > 0) {
-                this.log('Found question via #introWord:', text);
-                return text;
-            }
+            if (text) return text;
         }
-        
-        // Strategy 1: Look for large/prominent text elements that likely contain the word
-        const prominentSelectors = [
-            'h1', 'h2', 'h3', 
-            '.word', '.question', '.vocab', 
-            '[class*="word"]', '[class*="question"]',
-            '.big', '.large', '.main', '.primary',
-            'strong', 'b', 'em'
-        ];
-        
-        for (const sel of prominentSelectors) {
-            try {
-                const elements = document.querySelectorAll(sel);
-                for (const el of elements) {
-                    // Skip if it's an input, button, or has many children (likely a container)
-                    if (el.tagName === 'INPUT' || el.tagName === 'BUTTON' || el.tagName === 'A') continue;
-                    if (el.children.length > 3) continue;
-                    
-                    const text = this.getText(el);
-                    // Word should be reasonable length (1-100 chars) and not be common UI text
-                    if (text && text.length >= 1 && text.length < 100) {
-                        const lowerText = text.toLowerCase();
-                        // Skip common UI elements
-                        if (this.isUIText(lowerText)) continue;
-                        
-                        // Check if element is visible
-                        const rect = el.getBoundingClientRect();
-                        if (rect.width > 0 && rect.height > 0) {
-                            this.log('Found question via prominent element:', text, el);
-                            return text;
-                        }
-                    }
-                }
-            } catch (e) {}
-        }
-        
-        // Strategy 2: Look for the largest visible text element in the main content area
-        const allText = document.querySelectorAll('*');
-        let bestCandidate = null;
-        let bestScore = 0;
-        
-        for (const el of allText) {
-            if (el.tagName === 'SCRIPT' || el.tagName === 'STYLE' || el.tagName === 'INPUT' || 
-                el.tagName === 'BUTTON' || el.tagName === 'A' || el.tagName === 'HTML' || 
-                el.tagName === 'BODY' || el.tagName === 'HEAD') continue;
-            
-            // Only consider leaf nodes or elements with just text
-            if (el.children.length > 2) continue;
-            
-            const text = this.getText(el);
-            if (!text || text.length < 2 || text.length > 100) continue;
-            if (this.isUIText(text.toLowerCase())) continue;
-            
-            const rect = el.getBoundingClientRect();
-            if (rect.width === 0 || rect.height === 0) continue;
-            
-            // Score based on font size and position
-            const style = window.getComputedStyle(el);
-            const fontSize = parseFloat(style.fontSize) || 12;
-            const isInViewport = rect.top >= 0 && rect.top < window.innerHeight / 2;
-            
-            let score = fontSize;
-            if (isInViewport) score *= 2;
-            if (el.tagName.match(/^H[1-6]$/)) score *= 1.5;
-            if (el.className && el.className.toString().match(/word|question|vocab/i)) score *= 2;
-            
-            if (score > bestScore) {
-                bestScore = score;
-                bestCandidate = text;
-            }
-        }
-        
-        if (bestCandidate) {
-            this.log('Found question via scoring:', bestCandidate);
-            return bestCandidate;
-        }
-        
-        // Strategy 3: Try the configured selectors as fallback
-        let question = this.find(selectors.questionWord);
-        if (question) {
-            const text = this.getText(question);
-            if (text && !this.isUIText(text.toLowerCase())) {
-                return text;
-            }
-        }
-        
+
         return null;
     },
 
     /**
-     * Check if text is common UI text (not a vocabulary word)
+     * Get the correct answer from the hidden #a_word field
+     * This is the most reliable source — practice_local.js populates it
      */
-    isUIText(text) {
-        if (!text || typeof text !== 'string') return true;
-        
-        const lowerText = text.toLowerCase().trim();
-        
-        // Reject pure numbers or timestamps
-        if (/^\d+$/.test(text.trim())) return true;
-        if (/^\d{10,}$/.test(text.trim())) return true; // Timestamps
-        
-        // Reject very short text (less than 2 actual letters)
-        const letterCount = (text.match(/[a-zA-ZáčďéěíňóřšťúůýžÁČĎÉĚÍŇÓŘŠŤÚŮÝŽäöüßÄÖÜ]/g) || []).length;
-        if (letterCount < 2) return true;
-        
-        // Reject if it's mostly numbers
-        const digitCount = (text.match(/\d/g) || []).length;
-        if (digitCount > letterCount) return true;
-        
-        // UI patterns to reject
-        const uiPatterns = [
-            'next', 'continue', 'skip', 'submit', 'check', 'ok', 'cancel',
-            'correct', 'wrong', 'right', 'error', 'success',
-            'loading', 'please wait', 'score', 'points', 'progress',
-            'login', 'logout', 'sign', 'register', 'password',
-            'menu', 'home', 'back', 'settings', 'help',
-            'wocabee', 'copyright', '©', 'cookie', 'privacy',
-            'click', 'tap', 'press', 'select', 'choose',
-            // Extension's own UI text
-            'learning mode', 'wocabeehelper', 'indexed', 'words known',
-            'hint', 'answer', 'translation',
-            // Czech UI text
-            'seznam', 'balíků', 'balík', 'nastavení', 'odhlásit',
-            'přihlásit', 'pokračovat', 'zpět', 'další', 'hotovo',
-            'správně', 'špatně', 'chyba', 'body', 'skóre'
-        ];
-        
-        // Exact match rejection
-        if (uiPatterns.includes(lowerText)) return true;
-        
-        // Partial match rejection
-        return uiPatterns.some(pattern => lowerText.includes(pattern));
+    getHiddenAnswer() {
+        const el = document.getElementById('a_word');
+        if (el && el.value) return el.value.trim();
+        return null;
     },
 
     /**
-     * Debug function to analyze the page and find elements
+     * Get the answer type from hidden #a_type field ("word" or "translation")
      */
-    debugPage() {
-        console.log('%c[WocabeeHelper] Page Debug Info:', 'color: #E91E63; font-weight: bold; font-size: 14px;');
-        
-        // Find all text elements
-        const textElements = [];
-        document.querySelectorAll('*').forEach(el => {
-            if (el.tagName === 'SCRIPT' || el.tagName === 'STYLE') return;
-            const text = (el.textContent || '').trim();
-            if (text && text.length > 1 && text.length < 100 && el.children.length <= 2) {
-                const rect = el.getBoundingClientRect();
-                if (rect.width > 0 && rect.height > 0) {
-                    const style = window.getComputedStyle(el);
-                    textElements.push({
-                        text: text.substring(0, 50),
-                        tag: el.tagName,
-                        class: el.className?.toString().substring(0, 30) || '',
-                        id: el.id,
-                        fontSize: style.fontSize,
-                        top: Math.round(rect.top),
-                        visible: rect.top >= 0 && rect.top < window.innerHeight
-                    });
-                }
+    getAnswerType() {
+        const el = document.getElementById('a_type');
+        if (el && el.value) return el.value.trim();
+        return null;
+    },
+
+    /**
+     * Get the current word_id from hidden field
+     */
+    getCurrentWordId() {
+        const el = document.getElementById('word_id');
+        if (el && el.value) return el.value.trim();
+        return null;
+    },
+
+    /**
+     * Read all word pairs from the global $locWords JS variable
+     * This is the goldmine — all words for the session are here
+     */
+    getLocWords() {
+        try {
+            if (typeof $locWords !== 'undefined' && Array.isArray($locWords)) {
+                return $locWords;
             }
-        });
-        
-        // Sort by font size (largest first)
-        textElements.sort((a, b) => parseFloat(b.fontSize) - parseFloat(a.fontSize));
-        
-        console.log('Top text elements by size (visible in viewport):');
-        console.table(textElements.filter(e => e.visible).slice(0, 20));
-        
-        console.log('All large text elements:');
-        console.table(textElements.slice(0, 30));
-        
-        // Find inputs
-        const inputs = document.querySelectorAll('input:not([type="hidden"])');
-        console.log('Input fields found:', inputs.length);
-        inputs.forEach(inp => {
-            console.log('  Input:', inp.type, inp.id, inp.className, inp.placeholder);
-        });
-        
-        // Find buttons
-        const buttons = document.querySelectorAll('button, .btn, [role="button"]');
-        console.log('Buttons found:', buttons.length);
-        
-        return textElements;
+        } catch (e) {}
+        return null;
     },
 
     /**
-     * Find all answer options in a selection exercise
-     */
-    findAnswerOptions() {
-        const selectors = WocabeeConfig.selectors;
-        const options = this.findAll(selectors.answerOptions);
-        
-        // Filter to only clickable elements with text
-        return options.filter(opt => {
-            const text = this.getText(opt);
-            return text && text.length > 0 && text.length < 200;
-        });
-    },
-
-    /**
-     * Find the answer input field
+     * Find the answer input field for the current visible exercise
      */
     findAnswerInput() {
-        return this.find(WocabeeConfig.selectors.answerInput);
+        const s = WocabeeConfig.selectors;
+        // Check each exercise-specific input
+        if (this.isVisible(s.translateWord)) return this.find(s.translateWordInput);
+        if (this.isVisible(s.transcribe)) return this.find(s.transcribeInput);
+        if (this.isVisible(s.translateFallingWord)) return this.find(s.fallingWordInput);
+        if (this.isVisible(s.addMissingWord)) return this.find(s.missingWordInput);
+        // Fallback
+        return this.find('#translateWordAnswer, #transcribeAnswerWord, #translateFallingWordAnswer, #missingWordAnswer');
     },
 
     /**
-     * Extract word pairs from vocabulary lists
+     * Find answer option buttons for chooseWord exercise
      */
-    extractWordPairs() {
-        const pairs = [];
-        const selectors = WocabeeConfig.selectors;
-        
-        // Try to find word pair elements
-        const wordItems = this.findAll(selectors.wordPair);
-        
-        wordItems.forEach(item => {
-            // Try different structures
-            const source = this.find(selectors.sourceWord, item);
-            const target = this.find(selectors.targetWord, item);
-            
-            if (source && target) {
-                const sourceText = this.getText(source);
-                const targetText = this.getText(target);
-                if (sourceText && targetText) {
-                    pairs.push([sourceText, targetText]);
-                }
-            } else {
-                // Try to get from table cells or divs
-                const cells = item.querySelectorAll('td, .cell, .word');
-                if (cells.length >= 2) {
-                    const sourceText = this.getText(cells[0]);
-                    const targetText = this.getText(cells[1]);
-                    if (sourceText && targetText) {
-                        pairs.push([sourceText, targetText]);
-                    }
-                }
-            }
-        });
-        
-        return pairs;
+    findChooseWordOptions() {
+        const container = this.find(WocabeeConfig.selectors.chooseWordOptions);
+        if (!container) return [];
+        return this.findAll('button, .btn', container);
     },
 
     /**
-     * Get the exercise type (selection, typing, game, etc.)
+     * Find answer buttons for oneOutOfMany exercise
      */
-    detectExerciseType() {
-        const selectors = WocabeeConfig.selectors;
-        
-        // Check for selection exercise (multiple choice)
-        const options = this.findAnswerOptions();
-        if (options.length >= 2) {
-            return 'selection';
-        }
-        
-        // Check for typing exercise
-        const input = this.findAnswerInput();
-        if (input) {
-            return 'typing';
-        }
-        
-        // Check for game
-        if (this.find(selectors.gameContainer)) {
-            return 'game';
-        }
-        
-        // Check for test
-        if (this.find(selectors.testContainer)) {
-            return 'test';
-        }
-        
-        // Check for vocabulary list (for indexing)
-        const pairs = this.extractWordPairs();
-        if (pairs.length > 0) {
-            return 'vocabulary';
-        }
-        
+    findOneOutOfManyOptions() {
+        const container = this.find(WocabeeConfig.selectors.oneOutOfManyWords);
+        if (!container) return [];
+        return this.findAll('button, .btn', container);
+    },
+
+    /**
+     * Find pexeso cards
+     */
+    findPexesoCards() {
+        return this.findAll(WocabeeConfig.selectors.pexesoCard);
+    },
+
+    /**
+     * Find findPair question/answer buttons
+     */
+    findPairElements() {
+        const qContainer = this.find(WocabeeConfig.selectors.findPairQuestions);
+        const aContainer = this.find(WocabeeConfig.selectors.findPairAnswers);
+        return {
+            questions: qContainer ? this.findAll('button, .btn', qContainer) : [],
+            answers: aContainer ? this.findAll('button, .btn', aContainer) : []
+        };
+    },
+
+    /**
+     * Find matchPair buttons
+     */
+    findMatchPairButtons() {
+        const container = this.find(WocabeeConfig.selectors.matchPairWords);
+        if (!container) return [];
+        return this.findAll('button, .btn', container);
+    },
+
+    /**
+     * Get completeWord characters (the clickable letters)
+     */
+    findCompleteWordChars() {
+        const container = this.find(WocabeeConfig.selectors.completeWordChars);
+        if (!container) return [];
+        return this.findAll('.char', container);
+    },
+
+    /**
+     * Get the correct answer revealed after an incorrect submission
+     */
+    findCorrectWordAnswer() {
+        const el = this.find(WocabeeConfig.selectors.correctWordAnswer);
+        if (el) return this.getText(el);
         return null;
     },
 
     /**
-     * Simulate a click on an element
+     * Check if the correct result is currently showing
+     */
+    isCorrectResultShown() {
+        return this.isVisible(WocabeeConfig.selectors.correctResult);
+    },
+
+    /**
+     * Check if the incorrect result is currently showing
+     */
+    isIncorrectResultShown() {
+        return this.isVisible(WocabeeConfig.selectors.incorrectResult);
+    },
+
+    /**
+     * Click an element
      */
     click(element) {
         if (!element) return false;
-        
         try {
             element.click();
             return true;
         } catch (e) {
-            // Try dispatching events manually
             try {
-                element.dispatchEvent(new MouseEvent('click', {
-                    bubbles: true,
-                    cancelable: true,
-                    view: window
-                }));
+                element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
                 return true;
-            } catch (e2) {
-                return false;
-            }
+            } catch (e2) { return false; }
         }
     },
 
     /**
-     * Set value in an input field (with proper event triggering)
+     * Set value in an input field (triggers events for jQuery/framework detection)
      */
     setInputValue(input, value) {
         if (!input) return false;
-        
-        // Set the value
-        input.value = value;
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+        nativeInputValueSetter.call(input, value);
         input.setAttribute('value', value);
-        
-        // Trigger input events so React/Vue/Angular detect the change
         input.dispatchEvent(new Event('input', { bubbles: true }));
         input.dispatchEvent(new Event('change', { bubbles: true }));
         input.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));
-        
         return true;
     },
 
     /**
-     * Wait for an element to appear
+     * Submit an answer by clicking the appropriate submit button
      */
-    waitFor(selector, timeout = 5000) {
-        return new Promise((resolve, reject) => {
-            const element = this.find(selector);
-            if (element) {
-                resolve(element);
-                return;
-            }
-            
-            const observer = new MutationObserver((mutations, obs) => {
-                const element = this.find(selector);
-                if (element) {
-                    obs.disconnect();
-                    resolve(element);
-                }
-            });
-            
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true
-            });
-            
-            setTimeout(() => {
-                observer.disconnect();
-                reject(new Error(`Timeout waiting for ${selector}`));
-            }, timeout);
-        });
-    },
-
-    /**
-     * Check if we're on an exercise page
-     */
-    isExercisePage() {
-        return !!this.find(WocabeeConfig.selectors.exerciseContainer);
+    clickSubmit() {
+        const s = WocabeeConfig.selectors;
+        const btn = this.find(s.translateWordSubmit) ||
+                    this.find(s.completeWordSubmit) ||
+                    this.find(s.transcribeSubmit);
+        if (btn) { this.click(btn); return true; }
+        return false;
     },
 
     /**
@@ -545,5 +348,4 @@ const WocabeeDom = {
     }
 };
 
-// Make it available globally
 window.WocabeeDom = WocabeeDom;

@@ -1,68 +1,117 @@
 /**
  * WocabeeHelper Configuration
- * Contains all selectors, settings, and constants
+ * All selectors target actual WocaBee DOM elements
  */
 
 const WocabeeConfig = {
-    // Extension info
     name: 'WocabeeHelper',
     version: '1.0.0',
-
-    // Debug mode - set to true for console logs
     debug: true,
 
-    // Selectors for Wocabee elements
+    // WocaBee-specific selectors (from real DOM analysis)
     selectors: {
-        // Wocabee-specific intro word elements (for learning phase)
+        // Word display
         introWord: '#introWord',
         introTranslation: '#introTranslation',
-        
-        // Wocabee-specific quiz word element (for testing phase)
         quizWord: '#q_word',
-        
-        // Main app container
-        appContainer: '#app, .app-container, [data-app], #content, .content, main, body',
-        
-        // Exercise containers
-        exerciseContainer: '.exercise, .practice, .task, [class*="exercise"], [class*="practice"], [class*="task"], #practice, form, .container',
-        
-        // Question/Word display - very broad to catch Wocabee's word display
-        questionWord: '#q_word, #introWord, .word, .question, h1, h2, h3, .big, .large, .main, [class*="word"]:not(input):not(button):not([class*="password"])',
-        currentWord: '.current, .active, .highlight, .selected',
-        
-        // Multiple choice / Selection answers
-        answerOptions: '.answer, .choice, .option, .btn, button:not([type="submit"]), [class*="answer"], [class*="choice"], [class*="option"]',
-        answerButton: 'button, .btn, [role="button"], a.btn',
-        
-        // Text input for translation
-        answerInput: 'input[type="text"], input[type="search"], input:not([type="hidden"]):not([type="submit"]):not([type="checkbox"]):not([type="radio"]):not([type="password"]), textarea, #answer, [name*="answer"], [id*="answer"]',
-        
-        // Feedback elements
-        correctFeedback: '.correct, .success, .right, .good, .green, [class*="correct"], [class*="success"], [class*="right"], [class*="good"]',
-        incorrectFeedback: '.incorrect, .wrong, .error, .bad, .red, [class*="incorrect"], [class*="wrong"], [class*="error"], [class*="bad"]',
-        
-        // Correct answer reveal (shown after wrong answer)
-        revealedAnswer: '.correctWordAnswer, .correct-answer, .right-answer, .solution, .reveal, .show-answer, [class*="solution"], [class*="reveal"], [class*="correct-answer"]',
-        
-        // Word pairs/vocabulary list
-        wordPair: '.word-pair, .vocabulary-item, .vocab-item, .pair, tr, li, .row, .item',
-        sourceWord: '.source, .original, .from, .left, td:first-child, span:first-child',
-        targetWord: '.target, .translation, .to, .right, td:last-child, span:last-child',
-        
-        // Package/lesson containers
-        packageList: '.package-list, .lesson-list, .vocab-list, .packages, .lessons, ul, table',
-        packageItem: '.package-item, .lesson-item, .vocab-item, li, tr, .item',
-        
-        // Navigation
-        nextButton: '.next, .continue, .skip, .forward, [class*="next"], [class*="continue"]',
-        submitButton: '.submit, .check, .confirm, .ok, button[type="submit"], [class*="submit"], [class*="check"]',
-        
-        // Score/progress
-        scoreDisplay: '.score, .points, .progress, .result, [class*="score"], [class*="progress"], [class*="points"]',
-        
-        // Game modes
-        gameContainer: '.game, [class*="game"], #game',
-        testContainer: '.test, .exam, .quiz, [class*="test"], [class*="exam"], [class*="quiz"]'
+        quizNote: '#q_note',
+
+        // Hidden fields populated by practice_local.js with answer data
+        hiddenAnswer: '#a_word',
+        hiddenWordId: '#word_id',
+        hiddenAnswerType: '#a_type',
+        hiddenMyAnswer: '#my_a_word',
+
+        // Exercise containers (each type has a unique ID)
+        intro: '#intro',
+        translateWord: '#translateWord',
+        completeWord: '#completeWord',
+        chooseWord: '#chooseWord',
+        pexeso: '#pexeso',
+        findPair: '#findPair',
+        oneOutOfMany: '#oneOutOfMany',
+        matchPair: '#matchPair',
+        transcribe: '#transcribe',
+        translateFallingWord: '#translateFallingWord',
+        arrangeWords: '#arrangeWords',
+        describePicture: '#describePicture',
+        addMissingWord: '#addMissingWord',
+
+        // Translate Word exercise
+        translateWordInput: '#translateWordAnswer',
+        translateWordSubmit: '#translateWordSubmitBtn',
+
+        // Complete Word exercise
+        completeWordQuestion: '#completeWordQuestion',
+        completeWordAnswer: '#completeWordAnswer',
+        completeWordChars: '#characters',
+        completeWordSubmit: '#completeWordSubmitBtn',
+        completeWordRollback: '#rollbackBtn',
+
+        // Choose Word exercise (multiple choice)
+        chooseWordQuestion: '#ch_word',
+        chooseWordOptions: '#chooseWords',
+
+        // Pexeso (memory matching)
+        pexesoQuestionWords: '#pq_words',
+        pexesoAnswerWords: '#pa_words',
+        pexesoCard: '.pexesoCardWrapper',
+        pexesoFront: '.pexesoFront',
+        pexesoBack: '.pexesoBack',
+
+        // Find Pair exercise
+        findPairQuestions: '#q_words',
+        findPairAnswers: '#a_words',
+
+        // One Out Of Many
+        oneOutOfManyWords: '#oneOutOfManyWords',
+
+        // Match Pair
+        matchPairWords: '#matchPairWords',
+
+        // Transcribe (listen & type)
+        transcribeInput: '#transcribeAnswerWord',
+        transcribeSubmit: '#transcribeSubmitBtn',
+        transcribeSkip: '#transcribeSkipBtn',
+
+        // Translate Falling Word
+        fallingWord: '#tfw_word',
+        fallingWordInput: '#translateFallingWordAnswer',
+
+        // Arrange Words
+        arrangeSentence: '#def-lang-sentence',
+        sortableWords: '#sortableWords',
+
+        // Add Missing Word
+        missingWordInput: '#missingWordAnswer',
+
+        // Feedback / result containers
+        correctResult: '#correct',
+        incorrectResult: '#incorrect',
+        correctWordQuestion: '.correctWordQuestion',
+        correctWordAnswer: '.correctWordAnswer',
+
+        // Progress
+        progressBar: '#progressBar',
+        progressValue: '#progressValue',
+
+        // Intro navigation
+        introNext: '#introNext',
+        introIndex: '#introIndex',
+        introWordCount: '#introWordCount',
+
+        // Pictures
+        picturesContainer: '#pictures',
+        pictureThumbnail: '#pictureThumbnail',
+
+        // Helper keyboard
+        helperKeyboard: '.helperKeyboard',
+        keyboardChar: '.keyboardChar',
+
+        // Stage / completion
+        halfStageReached: '#halfStageReached',
+        msgCompleted: '#msgCompleted',
+        problemWords: '#problem-words'
     },
 
     // CSS classes for highlighting
@@ -86,9 +135,9 @@ const WocabeeConfig = {
 
     // Timing settings (in ms)
     timing: {
-        observerDebounce: 100,
+        observerDebounce: 150,
         highlightDelay: 50,
-        autoAnswerDelay: 500,
+        autoAnswerDelay: 600,
         indexingInterval: 2000
     },
 
@@ -102,10 +151,8 @@ const WocabeeConfig = {
     }
 };
 
-// Make it available globally
 window.WocabeeConfig = WocabeeConfig;
 
-// Log initialization
 if (WocabeeConfig.debug) {
     console.log(`%c[${WocabeeConfig.name}] Config loaded v${WocabeeConfig.version}`, 'color: #4CAF50; font-weight: bold;');
 }
